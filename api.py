@@ -1,14 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
-from db import SessionLocal, UserRequest, ChatHistory, init_db  # Only db.py
+from db import SessionLocal, UserRequest, ChatHistory, init_db  # your db.py
 
-# Initialize DB
+# ------------------- Initialize DB -------------------
 init_db()
 
-# Pydantic Models
+# ------------------- Pydantic Models -------------------
 class ChatItem(BaseModel):
     role: str
     content: str
@@ -23,10 +24,10 @@ class UserRequestItem(BaseModel):
     days_needed: str | None = None
     chat_history: List[ChatItem] | None = []
 
-# FastAPI App
+# ------------------- FastAPI App -------------------
 app = FastAPI(title="AbidPA 2 Agent API")
 
-# CORS
+# ------------------- CORS -------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,7 +36,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Endpoints
+# ------------------- Root Route -------------------
+@app.get("/")
+def read_root():
+    return {"message": "AI Agent is running!"}
+
+# ------------------- Simple HTML Interface -------------------
+@app.get("/interface", response_class=HTMLResponse)
+def get_interface():
+    html_content = """
+    <html>
+        <head>
+            <title>AbidPA 2 Agent</title>
+        </head>
+        <body>
+            <h1>Welcome to AbidPA 2 Agent!</h1>
+            <p>Use the API endpoints:</p>
+            <ul>
+                <li><b>POST /user_request</b> to submit a request.</li>
+                <li><b>GET /user_requests</b> to see all requests.</li>
+                <li><b>Swagger UI:</b> /docs</li>
+            </ul>
+        </body>
+    </html>
+    """
+    return html_content
+
+# ------------------- Create User Request -------------------
 @app.post("/user_request", response_model=UserRequestItem)
 def create_user_request(request: UserRequestItem):
     db: Session = SessionLocal()
@@ -65,6 +92,7 @@ def create_user_request(request: UserRequestItem):
     finally:
         db.close()
 
+# ------------------- Get All User Requests -------------------
 @app.get("/user_requests", response_model=List[UserRequestItem])
 def get_user_requests():
     db: Session = SessionLocal()
