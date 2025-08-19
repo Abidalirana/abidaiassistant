@@ -1,1 +1,1 @@
-web: chainlit run app.py --host 0.0.0.0 --port $PORT
+CMD ["sh", "-c", "chainlit run app.py -h 0.0.0.0 -p $PORT"]
